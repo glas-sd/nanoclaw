@@ -79,6 +79,8 @@ copied here:
 ```nc:copy from-branch:channels
 src/channels/whatsapp.ts
 src/channels/whatsapp-registration.test.ts
+src/channels/whatsapp-attachments.test.ts
+src/channels/whatsapp-media.test.ts
 container/skills/whatsapp-formatting/SKILL.md
 container/skills/whatsapp-formatting/instructions.md
 ```
@@ -114,13 +116,13 @@ pino@9.6.0
 ### 4. Build and validate
 
 Build first: it typechecks the adapter against core and proves the dependencies
-are installed. Then run the one integration test.
+are installed. Then run registration and inbound attachment regression tests.
 
 ```nc:run effect:build
 pnpm run build
 ```
 ```nc:run effect:test
-pnpm exec vitest run src/channels/whatsapp-registration.test.ts
+pnpm exec vitest run src/channels/whatsapp-registration.test.ts src/channels/whatsapp-attachments.test.ts src/channels/whatsapp-media.test.ts
 ```
 
 `whatsapp-registration.test.ts` imports the real channel barrel and asserts the

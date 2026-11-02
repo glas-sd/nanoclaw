@@ -15,7 +15,7 @@ Then delete the copied adapter, its registration test, its unit test, and the
 doesn't ship it):
 
 ```bash
-rm -f src/channels/whatsapp.ts src/channels/whatsapp-registration.test.ts src/channels/whatsapp.test.ts
+rm -f src/channels/whatsapp.ts src/channels/whatsapp-registration.test.ts src/channels/whatsapp.test.ts src/channels/whatsapp-attachments.test.ts src/channels/whatsapp-media.test.ts
 rm -rf container/skills/whatsapp-formatting
 ```
 
