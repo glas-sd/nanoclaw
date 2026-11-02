@@ -432,7 +432,7 @@ export interface CodexConfigPlan {
     approvalPolicy: string;
     projectDocumentMaxBytes: number;
   };
-  inference: { model?: string; effort?: string; fastMode?: boolean };
+  inference: { model?: string; effort?: string; fastMode?: boolean; autoCompactTokenLimit?: number };
   memory: { memories: false; useMemories: false; generateMemories: false };
   mcpServers: Record<string, McpServerConfig>;
 }
@@ -462,7 +462,21 @@ export function codexInferenceSection(input: {
     model: input.model,
     effort: normalizeCodexEffort(input.effort),
     fastMode: input.speed === 'fast' || undefined,
+    autoCompactTokenLimit: codexAutoCompactTokenLimit(process.env.CODEX_AUTO_COMPACT_TOKEN_LIMIT),
   };
+}
+
+/**
+ * Codex compacts a thread only near the model's context window unless told
+ * otherwise, and NanoClaw resumes the same thread for every message, so a chat
+ * group's every turn carries its whole history. Operator override, like
+ * CLAUDE_CODE_AUTO_COMPACT_WINDOW: set CODEX_AUTO_COMPACT_TOKEN_LIMIT in the
+ * host env or .env; the host-side codex provider passes it into the container.
+ */
+export function codexAutoCompactTokenLimit(value: string | undefined): number | undefined {
+  const text = value?.trim();
+  const limit = text && /^[1-9]\d*$/.test(text) ? Number(text) : NaN;
+  return Number.isSafeInteger(limit) && limit > 0 ? limit : undefined;
 }
 
 export function codexMemorySection(): CodexConfigPlan['memory'] {
@@ -475,7 +489,7 @@ export function codexMcpServersSection(input: Record<string, McpServerConfig>): 
 
 export function buildCodexConfigPlan(
   servers: Record<string, McpServerConfig>,
-  opts: { model?: string; effort?: string; fastMode?: boolean } = {},
+  opts: { model?: string; effort?: string; fastMode?: boolean; autoCompactTokenLimit?: number } = {},
 ): CodexConfigPlan {
   return {
     executionPolicy: codexExecutionPolicySection(),
@@ -505,6 +519,8 @@ export function renderCodexConfigToml(plan: CodexConfigPlan): string {
   if (plan.inference.model) lines.push(`model = ${tomlBasicString(plan.inference.model)}`);
   if (plan.inference.effort) lines.push(`model_reasoning_effort = ${tomlBasicString(plan.inference.effort)}`);
   if (plan.inference.fastMode) lines.push('service_tier = "fast"');
+  if (plan.inference.autoCompactTokenLimit)
+    lines.push(`model_auto_compact_token_limit = ${plan.inference.autoCompactTokenLimit}`);
   lines.push('');
 
   // NanoClaw owns persistent memory across providers. Keep Codex's native
